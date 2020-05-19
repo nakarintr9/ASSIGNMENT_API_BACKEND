@@ -7,10 +7,6 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const line = require("@line/bot-sdk");
-const middleware = require('@line/bot-sdk').middleware;
-const JSONParseError = require('@line/bot-sdk').JSONParseError;
-const SignatureValidationFailed = require('@line/bot-sdk').SignatureValidationFailed;
-
 //require config
 const config = require("./config/index");
 
@@ -63,7 +59,7 @@ app.post('/webhook', line.middleware(configLineMessaging), (req, res) => {
     .then((result) => res.json(result));
 });
 
-const client = new line.Client(config);
+const client = new line.Client(configLineMessaging);
 function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
