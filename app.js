@@ -57,35 +57,22 @@ const configLineMessaging = {
   channelSecret: config.LINE_MESSAGING_API_SECRET,
 };
 
-app.use(middleware(configLineMessaging));
-
-app.post("/webhook", (req, res) => {
-  Promise.all(req.body.events.map(handleEvent)).then((result) =>
-    res.json(result)
-  );
+app.post('/webhook', line.middleware(configLineMessaging), (req, res) => {
+  Promise
+    .all(req.body.events.map(handleEvent))
+    .then((result) => res.json(result));
 });
 
-const client = new line.Client(configLineMessaging);
+const client = new line.Client(config);
 function handleEvent(event) {
-  if (event.type !== "message" || event.message.type !== "text") {
+  if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
   }
 
   return client.replyMessage(event.replyToken, {
     type: 'text',
-    text: 'I cannot leave a 1-on-1 chat!',
+    text: event.message.text
   });
 }
-
-app.use((err, req, res, next) => {
-  if (err instanceof SignatureValidationFailed) {
-    res.status(401).send(err.signature)
-    return
-  } else if (err instanceof JSONParseError) {
-    res.status(400).send(err.raw)
-    return
-  }
-  next(err) // will throw default 500
-})
 
 module.exports = app;
