@@ -54,6 +54,7 @@ const configLineMessaging = {
 };
 
 app.post('/webhook', line.middleware(configLineMessaging), (req, res) => {
+  console.log(req.body);
   Promise
     .all(req.body.events.map(handleEvent))
     .then((result) => res.json(result));

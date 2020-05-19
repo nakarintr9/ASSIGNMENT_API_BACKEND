@@ -13,8 +13,4 @@ router.post('/findBC',DOSCGController.findBC);
 /* http://localhost:9000/DOSCG/findTheBestWay */
 router.post('/findTheBestWay',DOSCGController.findTheBestWay);
 
-/* http://localhost:9000/DOSCG/findTheBestWay */
-// router.post('/lineMessagingCallback',DOSCGController.lineMessagingCallback);
-
-
 module.exports = router;
