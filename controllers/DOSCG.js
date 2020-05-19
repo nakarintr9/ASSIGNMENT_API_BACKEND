@@ -52,23 +52,25 @@ exports.findTheBestWay = async (req, res, next) => {
     let baseurl = "https://maps.googleapis.com/maps/api/directions/json?";
     let param =
       "origin=" +
-      origin.replace(" ","+") +
+      origin.replace(" ", "+") +
       "&destination=" +
-      destination.replace(" ","+") +
+      destination.replace(" ", "+") +
       "&key=" +
       config.GOOGLE_MAPS_API_KEY;
-    var request = require("request");
-    var options = {
+
+    axiosInstance({
       method: "GET",
-      url: 'https://maps.googleapis.com/maps/api/directions/json?origin=centralwaord&destination=SCG+Bangsue&key=AIzaSyBq1zC7Zuy5PRBq3boANPCaHfU4yQC4-nA',
-      headers: {},
-    };
-    request(options, function (error, response) {
-      if (error) throw new Error(error);
-      return res.status(200).json({
-        data: JSON.parse(response.body),
+      url: baseurl + param,
+    })
+      .then((response) => {
+        console.log(response.data);
+        return res.status(200).json({
+          data: JSON.parse(JSON.stringify(response.data)),
+        });
+      })
+      .catch((err) => {
+        throw new Error(err);
       });
-    });
   } catch (error) {
     res.status(400).json({
       error: {
@@ -77,5 +79,3 @@ exports.findTheBestWay = async (req, res, next) => {
     });
   }
 };
-
-
