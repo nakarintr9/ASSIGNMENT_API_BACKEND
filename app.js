@@ -57,7 +57,9 @@ const configLineMessaging = {
   channelSecret: config.LINE_MESSAGING_API_SECRET,
 };
 
-app.post("/DOSCG/lineMessagingCallback", line.middleware(configLineMessaging), (req, res) => {
+app.use(middleware(configLineMessaging));
+
+app.post("/DOSCG/lineMessagingCallback", (req, res) => {
   Promise.all(req.body.events.map(handleEvent)).then((result) =>
     res.json(result)
   );
@@ -70,8 +72,8 @@ function handleEvent(event) {
   }
 
   return client.replyMessage(event.replyToken, {
-    type: "text",
-    text: event.message.text,
+    type: 'text',
+    text: 'I cannot leave a 1-on-1 chat!',
   });
 }
 
