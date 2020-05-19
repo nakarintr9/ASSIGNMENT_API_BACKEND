@@ -7,6 +7,9 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const line = require("@line/bot-sdk");
+const middleware = require('@line/bot-sdk').middleware;
+const JSONParseError = require('@line/bot-sdk').JSONParseError;
+const SignatureValidationFailed = require('@line/bot-sdk').SignatureValidationFailed;
 
 //require config
 const config = require("./config/index");
@@ -45,9 +48,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-//init passport
-app.use(passport.initialize());
-
 app.use("/", indexRouter);
 app.use("/DOSCG", DOSCGRouter);
 app.use("/", errorHandler);
@@ -57,22 +57,33 @@ const configLineMessaging = {
   channelSecret: config.LINE_MESSAGING_API_SECRET,
 };
 
-// app.post("/webhook", line.middleware(configLineMessaging), (req, res) => {
-//   Promise.all(req.body.events.map(handleEvent)).then((result) =>
-//     res.json(result)
-//   );
-// });
+app.post("/DOSCG/lineMessagingCallback", line.middleware(configLineMessaging), (req, res) => {
+  Promise.all(req.body.events.map(handleEvent)).then((result) =>
+    res.json(result)
+  );
+});
 
-// const client = new line.Client(configLineMessaging);
-// function handleEvent(event) {
-//   if (event.type !== "message" || event.message.type !== "text") {
-//     return Promise.resolve(null);
-//   }
+const client = new line.Client(configLineMessaging);
+function handleEvent(event) {
+  if (event.type !== "message" || event.message.type !== "text") {
+    return Promise.resolve(null);
+  }
 
-//   return client.replyMessage(event.replyToken, {
-//     type: "text",
-//     text: event.message.text,
-//   });
-// }
+  return client.replyMessage(event.replyToken, {
+    type: "text",
+    text: event.message.text,
+  });
+}
+
+app.use((err, req, res, next) => {
+  if (err instanceof SignatureValidationFailed) {
+    res.status(401).send(err.signature)
+    return
+  } else if (err instanceof JSONParseError) {
+    res.status(400).send(err.raw)
+    return
+  }
+  next(err) // will throw default 500
+})
 
 module.exports = app;

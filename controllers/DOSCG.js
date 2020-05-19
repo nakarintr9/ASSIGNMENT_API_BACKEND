@@ -79,3 +79,17 @@ exports.findTheBestWay = async (req, res, next) => {
     });
   }
 };
+
+// exports.lineMessagingCallback = async (req, res, next) => {
+//   try {
+//     return res.status(200).json({
+//       data: {},
+//     });
+//   } catch (error) {
+//     res.status(400).json({
+//       error: {
+//         message: "เกิดผิดพลาด " + error.message,
+//       },
+//     });
+//   }
+// };
