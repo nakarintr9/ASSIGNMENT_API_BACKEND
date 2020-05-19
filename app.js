@@ -53,23 +53,33 @@ const configLineMessaging = {
   channelSecret: config.LINE_MESSAGING_API_SECRET,
 };
 
+// create LINE SDK client
+const client = new line.Client(configLineMessaging);
+
+// register a webhook handler with middleware
+// about the middleware, please refer to doc
 app.post('/webhook', line.middleware(configLineMessaging), (req, res) => {
-  console.log(req.body);
   Promise
     .all(req.body.events.map(handleEvent))
-    .then((result) => res.json(result));
+    .then((result) => res.json(result))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).end();
+    });
 });
 
-const client = new line.Client(configLineMessaging);
+// event handler
 function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
+    // ignore non-text-message event
     return Promise.resolve(null);
   }
 
-  return client.replyMessage(event.replyToken, {
-    type: 'text',
-    text: event.message.text
-  });
+  // create a echoing text message
+  const echo = { type: 'text', text: event.message.text };
+
+  // use reply API
+  return client.replyMessage(event.replyToken, echo);
 }
 
 module.exports = app;
