@@ -59,7 +59,7 @@ const configLineMessaging = {
 
 app.use(middleware(configLineMessaging));
 
-app.post("/DOSCG/lineMessagingCallback", (req, res) => {
+app.post("/webhook", (req, res) => {
   Promise.all(req.body.events.map(handleEvent)).then((result) =>
     res.json(result)
   );
