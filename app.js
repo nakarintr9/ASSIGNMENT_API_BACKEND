@@ -6,10 +6,10 @@ const passport = require("passport");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
-const line = require("@line/bot-sdk");
-const middleware = require('@line/bot-sdk').middleware;
-const JSONParseError = require('@line/bot-sdk').JSONParseError;
-const SignatureValidationFailed = require('@line/bot-sdk').SignatureValidationFailed;
+
+const bodyParser = require('body-parser')
+const request = require('request')
+
 //require config
 const config = require("./config/index");
 
@@ -56,39 +56,34 @@ const configLineMessaging = {
   channelSecret: config.LINE_MESSAGING_API_SECRET,
 };
 
-app.post('/webhook', middleware(configLineMessaging),(req, res) => {
-  Promise
-    .all(req.body.events.map(handleEvent))
-    .then((result) => res.json(result))
-    .catch((err) => {
-      console.error(err);
-      res.status(500).end();
-    });
-})
+app.use('/webhook',bodyParser.urlencoded({ extended: false }));
+app.use('/webhook',bodyParser.json());
+app.post('/webhook', (req, res) => {
+    let reply_token = req.body.events[0].replyToken
+    let msg = req.body.events[0].message.text
+    reply(reply_token, msg)
+    res.sendStatus(200)
+});
 
-// event handler
-function handleEvent(event) {
-  if (event.type !== 'message' || event.message.type !== 'text') {
-    // ignore non-text-message event
-    return Promise.resolve(null);
+function reply(reply_token, msg) {
+  let headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer {xxxxxxx}'
   }
-
-  // create a echoing text message
-  const echo = { type: 'text', text: event.message.text };
-
-  // use reply API
-  return client.replyMessage(event.replyToken, echo);
+  let body = JSON.stringify({
+      replyToken: reply_token,
+      messages: [{
+          type: 'text',
+          text: msg
+      }]
+  })
+  request.post({
+      url: 'https://api.line.me/v2/bot/message/reply',
+      headers: headers,
+      body: body
+  }, (err, res, body) => {
+      console.log('status = ' + res.statusCode);
+  });
 }
-
-app.use("/webhook",(err, req, res, next) => {
-  if (err instanceof SignatureValidationFailed) {
-    res.status(401).send(err.signature)
-    return
-  } else if (err instanceof JSONParseError) {
-    res.status(400).send(err.raw)
-    return
-  }
-  next(err) // will throw default 500
-})
 
 module.exports = app;
