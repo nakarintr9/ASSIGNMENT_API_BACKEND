@@ -7,9 +7,9 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const cors = require("cors");
 const line = require("@line/bot-sdk");
-const middleware = require('@line/bot-sdk').middleware
-const JSONParseError = require('@line/bot-sdk').JSONParseError
-const SignatureValidationFailed = require('@line/bot-sdk').SignatureValidationFailed
+const middleware = require('@line/bot-sdk').middleware;
+const JSONParseError = require('@line/bot-sdk').JSONParseError;
+const SignatureValidationFailed = require('@line/bot-sdk').SignatureValidationFailed;
 //require config
 const config = require("./config/index");
 
@@ -56,13 +56,31 @@ const configLineMessaging = {
   channelSecret: config.LINE_MESSAGING_API_SECRET,
 };
 
-app.use(middleware(configLineMessaging));
-
-app.post('/webhook', (req, res) => {
-  res.json(req.body.events) // req.body will be webhook event object
+app.post('/webhook', middleware(configLineMessaging),(req, res) => {
+  Promise
+    .all(req.body.events.map(handleEvent))
+    .then((result) => res.json(result))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).end();
+    });
 })
 
-app.use((err, req, res, next) => {
+// event handler
+function handleEvent(event) {
+  if (event.type !== 'message' || event.message.type !== 'text') {
+    // ignore non-text-message event
+    return Promise.resolve(null);
+  }
+
+  // create a echoing text message
+  const echo = { type: 'text', text: event.message.text };
+
+  // use reply API
+  return client.replyMessage(event.replyToken, echo);
+}
+
+app.use("/webhook",(err, req, res, next) => {
   if (err instanceof SignatureValidationFailed) {
     res.status(401).send(err.signature)
     return
