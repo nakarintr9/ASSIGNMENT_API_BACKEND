@@ -15,6 +15,7 @@ const config = require("./config/index");
 
 const indexRouter = require("./routes/index");
 const DOSCGRouter = require("./routes/DOSCG");
+const authenRouter = require("./routes/authen");
 
 //import middleware
 const errorHandler = require("./middleware/errorHandler");
@@ -29,7 +30,7 @@ app.set("trust proxy", 1);
 
 const limiter = rateLimit({
   windowMs: 10 * 1000, // 10 วินาที
-  max: 5, // limit each IP to 100 requests per windowMs
+  max: 20, // limit each IP to 100 requests per windowMs
 });
 
 //  apply to all requests
@@ -49,42 +50,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/DOSCG", DOSCGRouter);
+app.use("/authen", authenRouter);
 app.use("/", errorHandler);
-
-const configLineMessaging = {
-  channelAccessToken: config.LINE_MESSAGING_API_ACCESS_TOKEN,
-  channelSecret: config.LINE_MESSAGING_API_SECRET,
-};
-
-app.use('/webhook',bodyParser.urlencoded({ extended: false }));
-app.use('/webhook',bodyParser.json());
-app.post('/webhook', (req, res) => {
-    console.log(req.body);
-    let reply_token = req.body.events[0].replyToken
-    let msg = req.body.events[0].message.text
-    reply(reply_token, msg)
-    res.sendStatus(200)
-});
-
-function reply(reply_token, msg) {
-  let headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer {xxxxxxx}'
-  }
-  let body = JSON.stringify({
-      replyToken: reply_token,
-      messages: [{
-          type: 'text',
-          text: msg
-      }]
-  })
-  request.post({
-      url: 'https://api.line.me/v2/bot/message/reply',
-      headers: headers,
-      body: body
-  }, (err, res, body) => {
-      console.log('status = ' + res.statusCode);
-  });
-}
 
 module.exports = app;
